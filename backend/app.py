@@ -25,6 +25,22 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# Adding category model
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    color = db.Column(db.String(7), default='#3B82F6')  # hex color
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    create_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tasks = db.relationship('Task', backref='category', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'color': self.color,
+            'created_at': self.create_at.isoformat()
+        }
 
 
 # Models
@@ -53,6 +69,7 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
 
     def to_dict(self):
         return {
@@ -63,7 +80,9 @@ class Task(db.Model):
             'priority': self.priority,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'updated_at': self.updated_at.isoformat(),
+            'category_id': self.category_id,
+            'category': self.category.to_dict() if self.category else None
         }
 
 
@@ -163,6 +182,7 @@ def create_task(current_user):
         title=data['title'],
         description=data.get('description', ''),
         priority=data.get('priority', 'medium'),
+        category_id=data.get('category'),
         user_id=current_user.id
     )
 
@@ -207,6 +227,8 @@ def update_task(current_user, task_id):
         task.completed = data['completed']
     if 'priority' in data:
         task.priority = data['priority']
+    if 'category_id' in data:
+        task.category_id = data['category_id']
     if 'due_date' in data:
         if data['due_date']:
             try:
@@ -233,6 +255,51 @@ def delete_task(current_user, task_id):
     db.session.commit()
 
     return jsonify({'message': 'Task deleted successfully'}), 200
+
+
+# Category Routes
+@app.route('/api/categories', methods=['GET'])
+@token_required
+def get_categories(current_user):
+    categories = Category.query.filter_by(user_id=current_user.id).all()
+    return jsonify([category.to_dict() for category in categories]), 200
+
+
+@app.route('/api/categories', methods=['POST'])
+@token_required
+def create_category(current_user):
+    data = request.get_json()
+
+    if not data or not data.get('name'):
+        return jsonify({'message': 'Category name is required'}), 400
+
+    category = Category(
+        name=data['name'],
+        color=data.get('color', '#3B82F6'),
+        user_id=current_user.id
+    )
+
+    db.session.add(category)
+    db.session.commit()
+
+    return jsonify(category.to_dict()), 201
+
+
+@app.route('/api/categories/<int:category_id>', methods=['DELETE'])
+@token_required
+def delete_category(current_user, category_id):
+    category = Category.query.filter_by(id=category_id, user_id=current_user.id).first()
+
+    if not category:
+        return jsonify({'message': 'Category not found'}), 404
+
+    # Remove category from all tasks (don't delete the tasks)
+    Task.query.filter_by(category_id=category_id).update({'category_id': None})
+
+    db.session.delete(category)
+    db.session.commit()
+
+    return jsonify({'message': 'Category deleted successfully'}), 200
 
 
 # Health check
