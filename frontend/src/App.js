@@ -24,6 +24,7 @@ function App() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: '', color: '#3B82F6' });
 
+
   useEffect(() => {
     if (token) {
       fetchUser();
@@ -239,9 +240,19 @@ const deleteCategory = async (categoryId) => {
   };
 
   const filteredTasks = tasks.filter(task => {
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
-    return true;
+    // Filter by completion status
+    let passesStatusFilter = true;
+    if (filter == 'active') passesStatusFilter = !task.completed;
+    if (filter == 'completed') passesStatusFilter = task.completed;
+
+    // Filter by category if the category is selected
+    let passesCategoryFilter = true;
+    if (filter.startsWith('category-')) {
+      const categoryId = parseInt(filter.split('-')[1]);
+      passesCategoryFilter = task.category_id === categoryId;
+    }
+
+    return passesStatusFilter && passesCategoryFilter;
   });
 
   if (!token) {
@@ -453,27 +464,53 @@ const deleteCategory = async (categoryId) => {
             )}
           </form>
 
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg transition ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              All ({tasks.length})
-            </button>
-            <button
-              onClick={() => setFilter('active')}
-              className={`px-4 py-2 rounded-lg transition ${filter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              Active ({tasks.filter(t => !t.completed).length})
-            </button>
-            <button
-              onClick={() => setFilter('completed')}
-              className={`px-4 py-2 rounded-lg transition ${filter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              Completed ({tasks.filter(t => t.completed).length})
-            </button>
-          </div>
+          <div className="mb-4">
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-lg transition ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                >
+                  All ({tasks.length})
+                </button>
+                <button
+                  onClick={() => setFilter('active')}
+                  className={`px-4 py-2 rounded-lg transition ${filter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                >
+                  Active ({tasks.filter(t => !t.completed).length})
+                </button>
+                <button
+                  onClick={() => setFilter('completed')}
+                  className={`px-4 py-2 rounded-lg transition ${filter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                >
+                  Completed ({tasks.filter(t => t.completed).length})
+                </button>
+              </div>
 
+              {categories.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  <span className="text-sm text-gray-600 py-2">Filter by category:</span>
+                  {categories.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => setFilter(filter === `category-${category.id}` ? 'all' : `category-${category.id}`)}
+                      className={`px-3 py-1 rounded-full text-sm transition ${
+                        filter === `category-${category.id}`
+                          ? 'ring-2 ring-offset-1'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                      style={{
+                        backgroundColor: filter === `category-${category.id}` ? category.color : category.color + '40',
+                        color: filter === `category-${category.id}` ? 'white' : category.color,
+                        borderColor: category.color,
+                        ringColor: category.color
+                      }}
+                    >
+                      {category.name} ({tasks.filter(t => t.category_id === category.id).length})
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           <div className="space-y-3">
             {filteredTasks.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No tasks yet. Add one above!</p>
