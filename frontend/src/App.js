@@ -23,7 +23,7 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: '', color: '#3B82F6' });
-
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (token) {
@@ -252,7 +252,16 @@ const deleteCategory = async (categoryId) => {
       passesCategoryFilter = task.category_id === categoryId;
     }
 
-    return passesStatusFilter && passesCategoryFilter;
+    // Filter by Search Query
+    let passesSearchFilter = true;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      passesSearchFilter =
+        task.title.toLowerCase().includes(query) ||
+        (task.description && task.description.toLowerCase().includes(query));
+      }
+
+    return passesStatusFilter && passesCategoryFilter && passesSearchFilter;
   });
 
   if (!token) {
@@ -399,6 +408,27 @@ const deleteCategory = async (categoryId) => {
               {error}
             </div>
           )}
+
+          <div className="mb-6">
+            <input
+                type="text"
+                placeholder = "Search tasks by title or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 px-3 border-2 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700"
+            />
+            {searchQuery && (
+            <div className="mt-2 text-sm text-gray-600">
+              Found {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} matching "{searchQuery}"
+              <button
+                onClick={() => setSearchQuery('')}
+                className="ml-2 text-blue-600 hover:text-blue-800"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
 
           <form onSubmit={handleTaskSubmit} className="space-y-4 mb-6">
             <input
