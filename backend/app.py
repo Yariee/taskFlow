@@ -16,14 +16,11 @@ ALLOWED_ORIGINS = [
     "https://*vercel.app"
 ]
 
-CORS(app, supports_credentials=True, origins="*")
+CORS(app,
+     resources={r"/api/*": {"origins": "*"}},
+     supports_credentials=False)
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Concdtrol-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
