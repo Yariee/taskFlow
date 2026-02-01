@@ -7,22 +7,11 @@ from datetime import datetime, timedelta
 import jwt
 import os
 from functools import wraps
-
 app = Flask(__name__)
 
-# allows local and production frontend
-ALLOWED_ORIGINS = [
-    "http://localhost:3080",
-    "https://*vercel.app"
-]
+# Simple CORS - allow all origins for /api routes
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-CORS(app,
-     resources={r"/api/*": {"origins": "*"}},
-     supports_credentials=False)
-
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///taskflow.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
