@@ -12,6 +12,7 @@ import {
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
 
 function App() {
+    // eslint-disable-next-line no-unused-vars
 	const [user, setUser] = useState(null);
 	const [token, setToken] = useState(localStorage.getItem("token"));
 	const [tasks, setTasks] = useState([]);
@@ -42,6 +43,7 @@ function App() {
 			fetchTasks();
 			fetchCategories();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [token]);
 
 	const fetchUser = async () => {
@@ -291,8 +293,8 @@ function App() {
 	const filteredTasks = tasks.filter((task) => {
 		// Filter by completion status
 		let passesStatusFilter = true;
-		if (filter == "active") passesStatusFilter = !task.completed;
-		if (filter == "completed") passesStatusFilter = task.completed;
+		if (filter === "active") passesStatusFilter = !task.completed;
+		if (filter === "completed") passesStatusFilter = task.completed;
 
 		// Filter by category if the category is selected
 		let passesCategoryFilter = true;
