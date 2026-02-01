@@ -9,6 +9,13 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
+
+# allows local and production frontend
+ALLOWED_ORIGINS = [
+    "http://localhost:3080",
+    "https://*vercel.app"
+]
+
 CORS(app, supports_credentials=True, origins="*")
 
 @app.after_request
@@ -313,4 +320,5 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-       app.run(debug=True, port=5001, host='127.0.0.1')
+       port = int(os.environ.get('PORT', 5001))
+       app.run(debug=False, port=port, host='0.0.0.0')
