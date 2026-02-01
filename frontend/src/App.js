@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 // API Base URL - change this when deploying
-const API_URL = "http://localhost:5001/api";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
 
 function App() {
 	const [user, setUser] = useState(null);
